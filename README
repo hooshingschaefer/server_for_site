@@ -1,1 +1,10 @@
-hello
+This program will allow me to read and write to files from php scripts on my personal website. 
+One thing ucsc doesnt provide for personal sites is sql and I wanted it to be able to save state.
+
+To run a test of the program, go ahead and download all the files save for this one.
+make the "server" executable and simply run it.
+
+on the same machine, run the simple.php script and you should see the file echoed out.
+
+Once I get linux on my pc, I will run the server there and hopefully my website will be more exciting once I add features that utilize the
+server.
