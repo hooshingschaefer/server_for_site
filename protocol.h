@@ -10,7 +10,7 @@
 using namespace std;
 
 enum class command_type : char{
-   ERROR = -1, CLOSE = 0, GET = 1, GETR = 2, READFILE = 4, RETFILE = 5,
+   ERROR = -1, CLOSE = 0, GET = 1, GETR = 2, READFILE = 4, RETFILE = 5, WRITEFILE = 6, ACK = 7,
 };
 
 struct elem_header{

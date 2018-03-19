@@ -47,18 +47,46 @@ void reply_read_file(int fd, const char* filename){
    int filesize = result.size();
    elem_header header;
    header.command = command_type::RETFILE;
+   uint32_t converted = htonl(filesize);//now in big-endian form
    //copy the 3 bytes into header
-   for (int i =0; i < 3; i++){
-      memcpy(&header.size[0] + 2 -i, (reinterpret_cast<char*>(&filesize) + i), 1);
-   }
-
+   memcpy(&header.size[0], reinterpret_cast<char*>(&converted) + 1, 3);
    //convert string into c string
-   char* retstr= new char[filesize];
+   char retstr[filesize+1];
    strcpy(retstr, result.c_str());
    //send header, buffer containing file contents
    send_packets(fd, &header, sizeof header);
    send_packets(fd, retstr,  filesize);
 }
+
+
+void reply_write_file(int fd, const char*filen){
+   //get header for file contents size
+   elem_header header;
+   recv_packets(fd, &header, sizeof header);
+   int sum = (header.size[0] << 16) + (header.size[1] << 8) + header.size[2];
+   char filec[sum];
+   recv_packets(fd, filec, sum);
+   //make ostream for the file
+   ofstream ofs{filen};
+   if (ofs.good()){
+      //char buffer[header.nbytes];
+      //recv_packet(client_sock, buffer, header.nbytes);
+      //write the filecontents to the ofstream
+      ofs.write(filec, sum);
+      ofs.close();
+      //memset(&header, 0, sizeof header);
+      //header.command = cix_command::ACK;
+      //send_packet(client_sock, &header, sizeof header);
+   }else{
+      //memset(&header, 0 , sizeof header);
+      //header.command = cix_command::NAK;
+      //header.nbytes = errno;
+      //send_packet(client_sock, &header, sizeof header);
+   }
+
+}
+
+
 
 void serve_client(int fd){
    elem_header header;
@@ -72,10 +100,24 @@ void serve_client(int fd){
             break;
       } no need for this currently*/
       case (command_type::READFILE) : {
-         char* buff = new char[sum+1];
+         cout << "request: read file " ;
+         char buff[sum+1];
          recv_packets(fd, buff, sum);
          buff[sum] = 0;
+         cout << buff << endl;
          reply_read_file(fd, buff);
+         break;
+      } 
+      case (command_type::WRITEFILE) : {
+         //get filename
+         cout << "request: write file " ;
+         char filen[sum+1];
+         recv_packets(fd, &filen, sum);
+         filen[sum] = 0;//null terminate the string
+         cout <<filen << endl;
+         //dispatch 
+         reply_write_file(fd, filen);
+         break;
       }   
       default:
             break;
@@ -84,7 +126,7 @@ void serve_client(int fd){
 
 
 int main(int , char** ){
-      string port ("6969");
+      char port[] = "6969";
       char MAX_CLIENTS = 5;
       int sock_fd, new_fd, yes = 1;
       struct sockaddr_in cli_addr;
@@ -96,7 +138,7 @@ int main(int , char** ){
       hints.ai_socktype = SOCK_STREAM;
       hints.ai_flags = AI_PASSIVE;
 
-      if ((getaddrinfo(0, port.c_str(), &hints, &server_info))!= 0){
+      if ((getaddrinfo(0, port, &hints, &server_info))!= 0){
          cout << "error getting address info" << endl;
          exit(1);
       }
@@ -155,7 +197,8 @@ int main(int , char** ){
                serve_client(new_fd);
                close(new_fd);
                //end child
-               exit(0);           }
+               exit(0);         
+           }
            close(new_fd);  // if parent, close child's fd
        }
 
