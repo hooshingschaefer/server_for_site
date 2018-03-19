@@ -17,18 +17,6 @@ using namespace std;
 void sigchld_handler(int ){
    while (wait(0) > 0);
 }
-/*
-void reply_get(int fd){
-   elem_header header;
-   header.command = command_type::GETR;
-   char str[16] = "why hello there" ; 
-   //header.len = 15;
-   send_packets(fd, &header, sizeof header);
-   cout << "sent header" << endl;
-   send_packets(fd, &str, 15);
-   cout << "sent string" << endl;
-}*/
-
 
 void reply_read_file(int fd, const char* filename){
    ifstream ifs{filename};
@@ -69,21 +57,11 @@ void reply_write_file(int fd, const char*filen){
    //make ostream for the file
    ofstream ofs{filen};
    if (ofs.good()){
-      //char buffer[header.nbytes];
-      //recv_packet(client_sock, buffer, header.nbytes);
-      //write the filecontents to the ofstream
       ofs.write(filec, sum);
       ofs.close();
-      //memset(&header, 0, sizeof header);
-      //header.command = cix_command::ACK;
-      //send_packet(client_sock, &header, sizeof header);
    }else{
-      //memset(&header, 0 , sizeof header);
-      //header.command = cix_command::NAK;
-      //header.nbytes = errno;
-      //send_packet(client_sock, &header, sizeof header);
+      cout << "invalid file" << endl;
    }
-
 }
 
 
@@ -94,11 +72,6 @@ void serve_client(int fd){
    //convert the 3 char array into an int
    int sum = (header.size[0] << 16) + (header.size[1] << 8) + header.size[2];
    switch(header.command) {
-      /*case (command_type::GET) : {
-            reply_get(fd);
-            cout <<"sent reply" << endl;
-            break;
-      } no need for this currently*/
       case (command_type::READFILE) : {
          cout << "request: read file " ;
          char buff[sum+1];
